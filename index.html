@@ -1,0 +1,217 @@
+
+    
+<!DOCTYPE html>
+
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8" />
+
+  <!-- Set the viewport width to device width for mobile -->
+  <meta name="viewport" content="width=device-width" />
+
+  <title>Tómalo y Úsalo</title>
+  
+  <!-- Included CSS Files (Uncompressed) -->
+  <!--
+  <link rel="stylesheet" href="stylesheets/foundation.css">
+  -->
+  
+  <!-- Included CSS Files (Compressed) -->
+  <link rel="stylesheet" href="stylesheets/foundation.min.css">
+  <link rel="stylesheet" href="stylesheets/app.css">
+
+  <script src="javascripts/modernizr.foundation.js"></script>
+
+  <!-- IE Fix for HTML5 Tags -->
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+</head>
+
+            
+
+
+  <body>
+   
+ 
+
+
+<div class="row">
+
+
+      <div class="two columns">
+        <div class="brand">Tomalo o dejalo</div>
+      </div>
+
+      <div class="eight columns centered search-bar">
+      
+        <h1>
+          Tomalo y usalo
+        </h1>
+        <div class="panel">
+        <input type="text" id="inputSearch">
+        <a class="success button large even" id="btnSearch">Buscar preservativo</a>
+        
+        <div id="results"></div>
+
+      </div>
+      
+      
+    </div>
+    
+    
+
+  </div>
+
+
+</div>
+
+<!-- <div class="row">
+
+
+0800 3333 444
+
+Línea Pregunte Sida - Ministerio de Salud de la Nación
+
+Gratis, confidencial y anónima.
+
+  <div class="eight columns centered">
+    <h4>Hacete el Test gratis</h4>
+    <p>Los Centros de Prevención Asesoramiento y Diagnóstico del VIH-sida (CePAD) son lugares que funcionan en centros de salud, hospitales y organizaciones comunitarias donde podés consultar tus dudas sobre el VIH-sida, retirar material informativo y hacerte el test de manera rápida y confidencial.</p>
+
+  </div>
+
+</div> 
+
+
+<div class="twelve columns">
+  <h2>Tómalo y úsalo</h2>
+  <p>Buscador de centros de distribución gratuita de preservativos.</p>
+  <hr />
+</div>
+
+-->
+ 
+<div id="map_canvas" style="width:100%; height:100%;"></div>
+   
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script>
+  $.getJSON('output.json', function(d){
+    window.d = d;
+    $('#btnSearch').click(fetchData);
+    
+
+    $('#inputSearch').keyup(fetchData);
+    });
+
+function fetchData(){
+      $('#results').html('');
+      var q = $('#inputSearch').val();
+if(!q.length) return;
+      $.each(d, function(index,data){
+        if(data.nombre.search(q) != -1) {
+          var nombre = data.nombre ? '<p>Nombre: ' + data.nombre + '</p>' : '';
+          var direccion = data.dir ? '<p>Dirección: ' + data.dir + '</p>' : '';
+          var dt = data.data ? '<p>Data: ' + data.data + '</p>' : '';
+          $('#results').append('<div class=\"result\">' + nombre + direccion +  dt + '</div>');
+        }
+      });
+    }
+
+</script>
+
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?sensor=false">
+    </script>
+    <script type="text/javascript">
+      $(function(){
+        
+
+
+        var mapOptions = {
+          center: new google.maps.LatLng(-34.61343136635911, -58.51567932128906),
+          zoom: 12,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          disableDefaultUI: true
+        };
+
+
+        var map = new google.maps.Map(document.getElementById("map_canvas"),
+            mapOptions);
+        
+
+        var styles = [
+            {
+
+              featureType: "road",
+              elementType: "geometry",
+              stylers: [
+                { lightness: 50 },
+                { visibility: "simplified" }
+              ]
+            },{
+              featureType: "road",
+              elementType: "labels",
+              stylers: [
+                { visibility: "off" }
+              ]
+            }
+          ];
+
+        map.setOptions({styles: styles});
+
+        var image = new google.maps.MarkerImage('images/marker-18.png',
+            new google.maps.Size(18, 18),
+            new google.maps.Point(0,0),
+            new google.maps.Point(0, 18));
+
+
+        var open;
+
+        $.getJSON('output.json', function(data){
+
+          $.each(data, function(index, el){
+            var infowindow = new google.maps.InfoWindow({
+              content:'<h3>'+el.nombre+'</h3><p>dirección: '+ el.dir +'</p><p>data: '+el.data+'</p>' 
+            });
+
+            var myLatlng = new google.maps.LatLng(el.lat, el.lng);
+            var marker = new google.maps.Marker({
+              position: myLatlng,
+              map: map,
+              icon: image,
+             title: el.dir
+            });
+
+            google.maps.event.addListener(marker, 'click', function() {
+              if(open)
+                open.close();
+              open = infowindow;
+              infowindow.open(map,marker);
+            });
+
+          });
+          
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(success, error);
+            function error() {}
+            function success(position) {
+
+              var ll = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+              map.setCenter(ll);
+              map.setZoom(15);
+            }
+          }
+
+        });
+      });
+    </script>
+
+</body>
+</html>
